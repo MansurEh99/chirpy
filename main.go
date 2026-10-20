@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"net/http"
 )
 
 func main() {
 	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir(".")))
 	server := http.Server {
 		Addr: ":8080",
 		Handler: mux,
@@ -15,6 +15,5 @@ func main() {
 	err := server.ListenAndServe()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
 	}
 }
