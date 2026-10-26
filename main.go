@@ -23,9 +23,9 @@ func main() {
 	apiCfg.fileserverHits.Store(0)
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	//mux.Handle("/assets/logo.png", http.FileServer(http.Dir("/assets")))
-	mux.HandleFunc("/healthz", ready)
-	mux.HandleFunc("/metrics", apiCfg.RequestNum)
-	mux.HandleFunc("/reset", apiCfg.Reset)
+	mux.HandleFunc("GET /healthz", ready)
+	mux.HandleFunc("GET /metrics", apiCfg.RequestNum)
+	mux.HandleFunc("POST /reset", apiCfg.Reset)
 	server := http.Server {
 		Addr: ":8080",
 		Handler: mux,
