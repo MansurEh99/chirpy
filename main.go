@@ -1,13 +1,21 @@
 package main
 
+import _ "github.com/lib/pq"
+
 import (
 	"fmt"
 	"net/http"
 	"sync/atomic"
+	"os"
+	"database/sql"
+
+	"github.com/MansurEh99/chirpy/internal/database"
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	dbQueries *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -18,11 +26,18 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func main() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Printf("Error accessing database: %v\n", err)
+		os.Exit(1)
+	}
 	mux := http.NewServeMux()
 	apiCfg := apiConfig {}
 	apiCfg.fileserverHits.Store(0)
+	apiCfg.dbQueries = database.New(db)
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
-	//mux.Handle("/assets/logo.png", http.FileServer(http.Dir("/assets")))
 	mux.HandleFunc("GET /api/healthz", ready)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.RequestNum)
 	mux.HandleFunc("POST /admin/reset", apiCfg.Reset)
@@ -31,7 +46,7 @@ func main() {
 		Addr: ":8080",
 		Handler: mux,
 	}
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
