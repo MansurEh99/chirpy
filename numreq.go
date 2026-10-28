@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
 
 func (c *apiConfig) RequestNum(w http.ResponseWriter, r *http.Request) {
@@ -19,5 +20,16 @@ func (c *apiConfig) RequestNum(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *apiConfig) Reset(w http.ResponseWriter, r *http.Request) {
+	platform := os.Getenv("PLATFORM")
+	if platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	c.fileserverHits.Store(0)
+	ctx := r.Context()
+	err := c.dbQueries.DeleteUser(ctx)
+	if err != nil {
+		fmt.Printf("Error deleting users: %v\n", err)
+		return
+	}
 }

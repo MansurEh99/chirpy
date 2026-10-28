@@ -5,18 +5,28 @@ import (
 	"net/http"
 	"encoding/json"
 	"log"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/MansurEh99/chirpy/internal/database"
 )
 
-func validateChirp(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-	}
-	type returnVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID 	  uuid.UUID `json:"user_id"`
+}
 
+type ChirpParams struct {
+	Body   string 		`json:"body"`
+	UserID uuid.UUID 	`json:"user_id"`
+}
+
+func (cfg *apiConfig) ChirpCreate (w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	var params ChirpParams
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -29,7 +39,25 @@ func validateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: cleaned(params.Body),})
+	var chirpParams database.CreateChirpParams
+	chirpParams.Body = params.Body
+	chirpParams.UserID = params.UserID
+	ctx := r.Context()
+
+	dbChirp, err := cfg.dbQueries.CreateChirp(ctx, chirpParams)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create Chirp", err)
+		return
+	}
+
+	var chirp Chirp
+	chirp.ID = dbChirp.ID
+	chirp.CreatedAt = dbChirp.CreatedAt
+	chirp.UpdatedAt = dbChirp.UpdatedAt
+	chirp.Body = dbChirp.Body
+	chirp.UserID = dbChirp.UserID
+
+	respondWithJSON(w, http.StatusCreated, chirp)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
