@@ -51,27 +51,17 @@ func (cfg *apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hour, err := time.ParseDuration("1h")
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Cannot parse hour", err)
-		return
-	}
-	jwt, err := auth.MakeJWT(dbUser.ID, cfg.secretKey, hour)
+	jwt, err := auth.MakeJWT(dbUser.ID, cfg.secretKey, time.Hour)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
 	}
 
 	refToken := auth.MakeRefreshToken()
-	sixtyDays, err := time.ParseDuration("1440h")
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Cannot parse hour", err)
-		return
-	}
 	params := database.CreateRefreshTokenParams{}
 	params.Token = refToken
 	params.UserID = dbUser.ID
-	params.ExpiresAt = time.Now().Add(sixtyDays)
+	params.ExpiresAt = time.Now().Add(time.Hour * 1440)
 	dbRefToken, err := cfg.dbQueries.CreateRefreshToken(ctx, params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Cannot create refresh token", err)
