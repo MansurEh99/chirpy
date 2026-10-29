@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/MansurEh99/chirpy/internal/database"
+	"github.com/MansurEh99/chirpy/internal/auth"
 )
 
 type User struct {
@@ -16,21 +18,32 @@ type User struct {
 	Email     string    `json:"email"`
 }
 
-type Email struct {
+type Pass struct {
+	Password string `json:"password"`
 	Email string `json:"email"`
 }
 
 func (cfg *apiConfig) UserCreate(w http.ResponseWriter, r *http.Request) {
-	var email Email
+	var pass Pass
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&email)
+	err := decoder.Decode(&pass)
 	if err != nil {
-		fmt.Printf("Request error: %v\n", err)
+		respondWithError(w, http.StatusBadRequest, "Unable to decode request", err)
 		return
 	}
 
+	hash, err := auth.HashPassword(pass.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to hash password", err)
+		return
+	}
+
+	var params database.CreateUserParams
+	params.Email = pass.Email
+	params.HashedPassword = hash
 	ctx := r.Context()
-	dbUser, err := cfg.dbQueries.CreateUser(ctx, email.Email)
+
+	dbUser, err := cfg.dbQueries.CreateUser(ctx, params)
 	if err != nil {
 		fmt.Printf("Database Error: %v\n", err)
 		return
