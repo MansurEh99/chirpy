@@ -16,6 +16,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries *database.Queries
+	secretKey string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -37,6 +38,7 @@ func main() {
 	apiCfg := apiConfig {}
 	apiCfg.fileserverHits.Store(0)
 	apiCfg.dbQueries = database.New(db)
+	apiCfg.secretKey = os.Getenv("SECRET_KEY")
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("GET /api/healthz", ready)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.RequestNum)

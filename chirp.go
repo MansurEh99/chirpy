@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/MansurEh99/chirpy/internal/database"
+	"github.com/MansurEh99/chirpy/internal/auth"
 )
 
 type Chirp struct {
@@ -39,9 +40,21 @@ func (cfg *apiConfig) ChirpCreate (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Not logged in", err)
+		return
+	}
+
+	id, err := auth.ValidateJWT(token, cfg.secretKey)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized access", err)
+		return
+	}
+
 	var chirpParams database.CreateChirpParams
 	chirpParams.Body = params.Body
-	chirpParams.UserID = params.UserID
+	chirpParams.UserID = id
 	ctx := r.Context()
 
 	dbChirp, err := cfg.dbQueries.CreateChirp(ctx, chirpParams)
