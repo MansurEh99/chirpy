@@ -7,6 +7,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/MansurEh99/chirpy/internal/auth"
 )
 
 type UpgradeInfo struct {
@@ -17,9 +18,20 @@ type UpgradeInfo struct {
 }
 
 func (cfg *apiConfig) UserUpgrade(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "missing API key", err)
+		return
+	}
+
+	if apiKey != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "Invalid API key", err)
+		return
+	}
+
 	var info UpgradeInfo
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&info)
+	err = decoder.Decode(&info)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request", err)
 		return
