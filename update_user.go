@@ -51,6 +51,7 @@ func (cfg *apiConfig) UserUpdate(w http.ResponseWriter, r *http.Request) {
 	updatedUser.CreatedAt = updatedDbUser.CreatedAt
 	updatedUser.UpdatedAt = updatedDbUser.UpdatedAt
 	updatedUser.Email = updatedDbUser.Email
+	updatedUser.IsChirpyRed = updatedDbUser.IsChirpyRed
 
 	respondWithJSON(w, http.StatusOK, updatedUser)
 }

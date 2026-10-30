@@ -22,6 +22,7 @@ type LoggedUser struct {
 	Email     string    `json:"email"`
 	Token     string    `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+	IsChirpyRed bool 	`json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) Login(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +76,7 @@ func (cfg *apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 	user.Email = dbUser.Email
 	user.Token = jwt
 	user.RefreshToken = dbRefToken.Token
+	user.IsChirpyRed = dbUser.IsChirpyRed
 
 	respondWithJSON(w, http.StatusOK, user)
 }

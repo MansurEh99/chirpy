@@ -16,6 +16,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	IsChirpyRed bool 	`json:"is_chirpy_red"`
 }
 
 type Pass struct {
@@ -54,6 +55,7 @@ func (cfg *apiConfig) UserCreate(w http.ResponseWriter, r *http.Request) {
 	user.CreatedAt = dbUser.CreatedAt
 	user.UpdatedAt = dbUser.UpdatedAt
 	user.Email = dbUser.Email
+	user.IsChirpyRed = dbUser.IsChirpyRed
 
 	respondWithJSON(w, http.StatusCreated, user)
 }
