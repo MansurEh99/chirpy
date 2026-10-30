@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"database/sql"
 	"errors"
+	"sort"
 
 	"github.com/google/uuid"
 )
@@ -26,6 +27,14 @@ func (cfg *apiConfig) ChirpsGet(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Unable to get chirps", err)
 			return
+		}
+
+		ord := r.URL.Query().Get("sort")
+		if ord == "" || ord == "asc" {
+			sort.Slice(dbChirps, func(i, j int) bool { return dbChirps[i].CreatedAt.Before(dbChirps[j].CreatedAt) })
+		}
+		if ord == "desc" {
+			sort.Slice(dbChirps, func(i, j int) bool { return dbChirps[j].CreatedAt.Before(dbChirps[i].CreatedAt)})
 		}
 
 		chirps := make([]Chirp, len(dbChirps))
@@ -51,6 +60,13 @@ func (cfg *apiConfig) ChirpsGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ord := r.URL.Query().Get("sort")
+	if ord == "" || ord == "asc" {
+		sort.Slice(dbChirps, func(i, j int) bool { return dbChirps[i].CreatedAt.Before(dbChirps[j].CreatedAt) })
+	}
+	if ord == "desc" {
+		sort.Slice(dbChirps, func(i, j int) bool { return dbChirps[j].CreatedAt.Before(dbChirps[i].CreatedAt)})
+	}
 	chirps := make([]Chirp, len(dbChirps))
 	for i, dbChirp := range dbChirps {
 		chirps[i].ID = dbChirp.ID
